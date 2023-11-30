@@ -13,3 +13,4 @@ map("n", "<C-j>", "<C-w>j", opts)
 
 -- Save file
 map("n", "<C-s>", ":w<CR>", opts)
+
