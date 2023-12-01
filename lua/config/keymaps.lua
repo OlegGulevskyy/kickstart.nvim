@@ -14,3 +14,6 @@ map("n", "<C-j>", "<C-w>j", opts)
 -- Save file
 map("n", "<C-s>", ":w<CR>", opts)
 
+-- Format file
+map("n", "<leader>ff", ":FormatWrite<CR>", { noremap = true, silent = true, desc = "[F]ormat [F]ile" })
+map("x", "<leader>ff", ":FormatWrite<CR>", { noremap = true, silent = true, desc = "[F]ormat [F]ile" })

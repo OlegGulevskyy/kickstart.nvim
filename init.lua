@@ -227,10 +227,11 @@ require('lazy').setup({
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
   require 'kickstart.plugins.autoformat',
-  require 'kickstart.plugins.conform',
+  require 'kickstart.plugins.formatter',
+  require 'kickstart.plugins.leap',
   require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.copilot',
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.themes.poimandres',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
@@ -242,6 +243,8 @@ require('lazy').setup({
 }, {})
 
 require("config.keymaps")
+
+vim.cmd('colorscheme poimandres')
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -275,6 +278,10 @@ vim.o.smartcase = true
 
 -- Keep signcolumn on by default
 vim.wo.signcolumn = 'yes'
+
+vim.o.tabstop = 2
+vim.o.shiftwidth = 2
+vim.o.expandtab = true
 
 -- Decrease update time
 vim.o.updatetime = 250
@@ -488,14 +495,10 @@ local on_attach = function(_, bufnr)
   nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
   nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
   nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+  nmap('<leader>cr', vim.lsp.buf.rename, '[C]urrent [R]ename')
   nmap('<leader>wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
-
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-    vim.lsp.buf.format()
-  end, { desc = 'Format current buffer with LSP' })
 end
 
 -- document existing key chains
