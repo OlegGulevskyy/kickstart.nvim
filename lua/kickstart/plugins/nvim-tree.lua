@@ -23,10 +23,10 @@ local function my_on_attach(bufnr)
   end
 
   -- copy default mappings here from defaults in next section
-  vim.keymap.set('n', '<C-]>', api.tree.change_root_to_node,          opts('CD'))
-  vim.keymap.set('n', '<C-e>', api.node.open.replace_tree_buffer,     opts('Open: In Place'))
-  vim.keymap.set('n', 'l', api.node.open.tab,     opts('Open: In New Tab'))
-  vim.keymap.set('n', 'h', api.node.navigate.parent_close,     opts('Close'))
+  vim.keymap.set('n', '<C-]>', api.tree.change_root_to_node, opts('CD'))
+  vim.keymap.set('n', '<C-e>', api.node.open.replace_tree_buffer, opts('Open: In Place'))
+  vim.keymap.set('n', 'l', api.node.open.tab, opts('Open: In New Tab'))
+  vim.keymap.set('n', 'h', api.node.navigate.parent_close, opts('Close'))
   ---
   -- OR use all default mappings
   api.config.mappings.default_on_attach(bufnr)
@@ -35,10 +35,10 @@ local function my_on_attach(bufnr)
   vim.keymap.del('n', '<C-]>', { buffer = bufnr })
 
   -- override a default
-  vim.keymap.set('n', '<C-r>', api.tree.reload,                       opts('Refresh'))
+  vim.keymap.set('n', '<C-r>', api.tree.reload, opts('Refresh'))
 
   -- add your mappings
-  vim.keymap.set('n', '?',     api.tree.toggle_help,                  opts('Help'))
+  vim.keymap.set('n', '?', api.tree.toggle_help, opts('Help'))
   ---
 end
 
@@ -48,7 +48,7 @@ local function openNvimConfig()
 
   -- Change nvim-tree's root to the config directory
   -- Not working currently
-  require'nvim-tree.lib'.change_dir('~/.config/nvim')
+  require 'nvim-tree.lib'.change_dir('~/.config/nvim')
 end
 
 -- Map the function to a keybinding
@@ -65,7 +65,7 @@ return {
     local nvtree = require("nvim-tree")
     nvtree.setup {
       view = {
-        width = 30,
+        width = 40,
         adaptive_size = false,
       },
       on_attach = my_on_attach,

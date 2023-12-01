@@ -4,8 +4,17 @@ return {
     -- Utilities for creating configurations
     local util = require "formatter.util"
     local prettierConfig = function()
+      -- usual local prettier lays inside node modules dir
+      local prettier_path_to_use = "./node_modules/.bin/prettier"
+
+      local nodes_dir = util.find_node_modules("./")
+      local prettier = nodes_dir .. "/.bin/prettier"
+      if vim.fn.filereadable(prettier) == 0 then
+        prettier_path_to_use = "prettier" -- global prettier to use
+      end
+
       return {
-        exe = "./node_modules/.bin/prettier",
+        exe = prettier_path_to_use,
         args = { "--stdin-filepath", vim.fn.shellescape(vim.api.nvim_buf_get_name(0)) },
         stdin = true
       }
@@ -20,6 +29,10 @@ return {
         html                   = { prettierConfig },
         typescript             = { prettierConfig },
         javascript             = { prettierConfig },
+        typescriptreact        = { prettierConfig },
+        javascriptreact        = { prettierConfig },
+        css                    = { prettierConfig },
+        scss                   = { prettierConfig },
         handlebars             = { prettierConfig },
         ['typescript.glimmer'] = { prettierConfig },
         ['javascript.glimmer'] = { prettierConfig },
