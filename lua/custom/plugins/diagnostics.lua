@@ -1,6 +1,7 @@
 local Layout = require("nui.layout")
 local Popup = require("nui.popup")
 local event = require("nui.utils.autocmd").event
+local parser = require("custom.plugins.diagnostics-message-parser")
 
 local popup = Popup({
   enter = true,
@@ -36,13 +37,14 @@ function get_severity(severity_code)
   return severity_map[severity_code]
 end
 
+-- Prepare header
 function handle_header(diag_severity, diag_code, diagnostics_count, current_line_num)
   local sev = get_severity(diag_severity)
   local code = "(TS" .. diag_code .. ")"
 
   -- Set left column
   local pop_width = popup.win_config.width
-  local left_lines = { sev, code }
+  local header_lines = { sev, code }
 
   -- To set highlights, we need line numbers that are indexed from 0
   local normalized_line_nr = (current_line_num == 0) and 0 or (current_line_num - 1)
@@ -58,22 +60,32 @@ function handle_header(diag_severity, diag_code, diagnostics_count, current_line
     col_end = #code,
   }
 
-  vim.api.nvim_buf_set_lines(popup.bufnr, current_line_num, current_line_num + #left_lines, false, left_lines)
-  return left_lines, severity_pos, code_pos
+  vim.api.nvim_buf_set_lines(popup.bufnr, current_line_num, current_line_num + #header_lines, false, header_lines)
+  return header_lines, severity_pos, code_pos
 end
 
+-- Prepare body
 function handle_body(message, diag_count, index, current_line_num)
-  -- Prepare right column
-  local body_lines = {}
-  for line in vim.gsplit(message, "\n") do
-    table.insert(body_lines, line)
-  end
-  local pop_width = popup.win_config.width
+  local normalized_line_nr = (current_line_num == 0) and 0 or (current_line_num - 1)
+  local message_start_pos = normalized_line_nr + 2
 
+  local body_lines = parser.parse_body(message, message_start_pos)
   -- Ensure at least 2 rows for each message
   if #body_lines < 2 then
     table.insert(body_lines, "") -- Add an extra empty line
   end
+
+  local vars = {}
+  local i = 0
+  for _, line in ipairs(body_lines) do
+    local tvars = parser.get_variable_pos(line, message_start_pos + i)
+    for _, j in ipairs(tvars) do
+      table.insert(vars, j)
+    end
+    i = i + 1
+  end
+
+  local pop_width = popup.win_config.width
 
   if index ~= diag_count then
     local separator = ""
@@ -83,13 +95,12 @@ function handle_body(message, diag_count, index, current_line_num)
     table.insert(body_lines, separator) -- Add an extra empty line
   end
 
-  local message_start_pos = current_line_num + 2
   local message_end_pos = message_start_pos + #body_lines
 
   -- Set right column
   vim.api.nvim_buf_set_lines(popup.bufnr, message_start_pos, message_end_pos, false, body_lines)
 
-  return body_lines, message_end_pos
+  return body_lines, message_end_pos, vars
 end
 
 local is_open = false
@@ -115,16 +126,20 @@ function Cool_Diagnostics()
 
   local severity_hl_ranges = {}
   local code_hl_ranges = {}
+  local vars_hl_ranges = {}
   local current_line_num = 0
 
   for index, diagnostic in ipairs(diagnostics) do
     local header_lines, severity_pos, code_pos = handle_header(diagnostic.severity, diagnostic.code, #diagnostics,
       current_line_num)
 
-    local body_lines, message_end_pos = handle_body(diagnostic.message, #diagnostics, index, current_line_num)
+    local body_lines, message_end_pos, vars = handle_body(diagnostic.message, #diagnostics, index, current_line_num)
 
     table.insert(severity_hl_ranges, severity_pos)
     table.insert(code_hl_ranges, code_pos)
+    for _, var in ipairs(vars) do
+      table.insert(vars_hl_ranges, var)
+    end
 
     -- Update the current line number for the next diagnostic, adding an extra line for spacing
     current_line_num = current_line_num + math.max(#header_lines, message_end_pos) + 1 -- +1 for the extra space
@@ -137,6 +152,11 @@ function Cool_Diagnostics()
 
   for _, range in ipairs(code_hl_ranges) do
     local hl_group = "Comment"
+    vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hl_group, range.line, range.col_start, range.col_end)
+  end
+
+  for _, range in ipairs(vars_hl_ranges) do
+    local hl_group = "String"
     vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hl_group, range.line, range.col_start, range.col_end)
   end
 end
