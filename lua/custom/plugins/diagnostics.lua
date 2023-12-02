@@ -24,15 +24,6 @@ local severity_map = {
   [5] = 'Deprecation',
 }
 
--- Colors
-vim.cmd [[
-highlight SeverityError guifg=red
-highlight SeverityWarning guifg=orange
-highlight SeverityInfo guifg=blue
-highlight SeverityHint guifg=green
-highlight SeverityDeprecation guifg=yellow
-]]
-
 function get_severity(severity_code)
   return severity_map[severity_code]
 end
@@ -42,7 +33,6 @@ function handle_header(diag_severity, diag_code, diagnostics_count, current_line
   local sev = get_severity(diag_severity)
   local code = "(TS" .. diag_code .. ")"
 
-  -- Set left column
   local pop_width = popup.win_config.width
   local header_lines = { sev, code }
 
@@ -69,38 +59,84 @@ function handle_body(message, diag_count, index, current_line_num)
   local normalized_line_nr = (current_line_num == 0) and 0 or (current_line_num - 1)
   local message_start_pos = normalized_line_nr + 2
 
-  local body_lines = parser.parse_body(message, message_start_pos)
+  local body_lines = parser.break_new_lines(message)
   -- Ensure at least 2 rows for each message
   if #body_lines < 2 then
     table.insert(body_lines, "") -- Add an extra empty line
   end
 
+  local new_body_lines = {}
   local vars = {}
   local i = 0
+  local added_lines_count = 0
+
   for _, line in ipairs(body_lines) do
-    local tvars = parser.get_variable_pos(line, message_start_pos + i)
-    for _, j in ipairs(tvars) do
-      table.insert(vars, j)
+    local temp_vars = parser.get_variable_pos(line, message_start_pos + i)
+    local has_raw_object = false
+
+    for _, temp_var in ipairs(temp_vars) do
+      if temp_var.is_raw_object then
+        has_raw_object = true
+
+        -- Split the line into two parts
+        local part1 = string.sub(line, 1, temp_var.col_start)
+        local part2 = string.sub(line, temp_var.col_end + 1)
+
+        -- Insert the first part into new_body_lines
+        if part1 ~= "" then
+          table.insert(new_body_lines, part1)
+        end
+
+        -- Insert the prettified lines
+        local lines = parser.break_new_lines(temp_var.match)
+        for _, k in ipairs(lines) do
+          table.insert(new_body_lines, k)
+        end
+
+        -- Insert the second part into new_body_lines
+        if part2 ~= "" then
+          table.insert(new_body_lines, part2)
+        end
+
+        added_lines_count = added_lines_count + #lines - 1
+      else
+        table.insert(vars, temp_var)
+      end
     end
+
+    -- If the line does not contain a raw object, add it as is
+    if not has_raw_object then
+      table.insert(new_body_lines, line)
+    end
+
     i = i + 1
   end
 
+  body_lines = new_body_lines
   local pop_width = popup.win_config.width
+
+  local new_vars = {}
+  local line_i = 0
+  for _, line in ipairs(body_lines) do
+    local temp_vars = parser.get_variable_pos(line, message_start_pos + line_i)
+    for _, temp_var in ipairs(temp_vars) do
+      table.insert(new_vars, temp_var)
+    end
+    line_i = line_i + 1
+  end
 
   if index ~= diag_count then
     local separator = ""
     for i = 1, pop_width do
       separator = separator .. "_"
     end
-    table.insert(body_lines, separator) -- Add an extra empty line
+    table.insert(body_lines, separator)
   end
 
   local message_end_pos = message_start_pos + #body_lines
 
-  -- Set right column
   vim.api.nvim_buf_set_lines(popup.bufnr, message_start_pos, message_end_pos, false, body_lines)
-
-  return body_lines, message_end_pos, vars
+  return body_lines, message_end_pos, new_vars
 end
 
 local is_open = false
