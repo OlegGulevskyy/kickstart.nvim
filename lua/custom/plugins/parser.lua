@@ -23,17 +23,23 @@ M.get_variable_pos = function(line, current_line_num)
   return matches
 end
 
-function prettify_string(string)
+function prettify_string(str)
   -- If JS object is too big, it will have "...;" in its children
   -- Need to replace those temporarily, otherwise prettier will fail
-  local preprocess = string:gsub("(%.%.%.%;)", " REPLACE_KEY: null ")
+  local preprocess = str:gsub("(%.%.%.%;)", " REPLACE_KEY: null ")
   local command = "echo \"" .. preprocess .. "\" | prettier --parser typescript"
-  local output = vim.fn.system(command)
-  local postprocess = output:gsub("(REPLACE_KEY: null)", "...")
-  print("PRETIFFY OUTPUT:")
-  print(postprocess)
-  print("END PRETIFFY OUTPUT")
-  return postprocess
+
+  -- Execute the command and check for errors
+  local output, status = vim.fn.systemlist(command)
+
+  if status ~= vim.v.shell_error then
+    -- Command executed successfully, process the output
+    local postprocess = table.concat(output, "\n"):gsub("(REPLACE_KEY: null)", "...")
+    return postprocess
+  else
+    -- Command failed, return the original string
+    return str
+  end
 end
 
 return M

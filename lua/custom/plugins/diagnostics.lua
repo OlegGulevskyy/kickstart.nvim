@@ -1,4 +1,4 @@
-local parser = require("custom.plugins.diagnostics-message-parser")
+local parser = require("custom.plugins.parser")
 local cd_utils = require("custom.plugins.utils")
 local popup = require("custom.plugins.popup")
 
