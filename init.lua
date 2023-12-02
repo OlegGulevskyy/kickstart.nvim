@@ -232,6 +232,7 @@ require('lazy').setup({
   require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.copilot',
   require 'kickstart.themes.poimandres',
+  require 'kickstart.plugins.nui',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
@@ -618,6 +619,8 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
+
+require "custom.plugins.diagnostics"
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
