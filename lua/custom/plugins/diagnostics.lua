@@ -1,39 +1,13 @@
-local Layout = require("nui.layout")
-local Popup = require("nui.popup")
-local event = require("nui.utils.autocmd").event
 local parser = require("custom.plugins.diagnostics-message-parser")
-
-local popup = Popup({
-  enter = true,
-  focusable = true,
-  border = {
-    style = "rounded",
-  },
-  position = "50%",
-  size = {
-    width = "80%",
-    height = "60%",
-  },
-})
-
-local severity_map = {
-  [1] = 'Error',
-  [2] = 'Warning',
-  [3] = 'Info',
-  [4] = 'Hint',
-  [5] = 'Deprecation',
-}
-
-function get_severity(severity_code)
-  return severity_map[severity_code]
-end
+local cd_utils = require("custom.plugins.utils")
+local popup = require("custom.plugins.popup")
 
 -- Prepare header
 function handle_header(diag_severity, diag_code, diagnostics_count, current_line_num)
-  local sev = get_severity(diag_severity)
-  local code = "(TS" .. diag_code .. ")"
+  local sev = cd_utils.get_severity(diag_severity)
+  local code = cd_utils.get_code(diag_code)
 
-  local pop_width = popup.win_config.width
+  local pop_width = popup.get_width()
   local header_lines = { sev, code }
 
   -- To set highlights, we need line numbers that are indexed from 0
@@ -50,7 +24,7 @@ function handle_header(diag_severity, diag_code, diagnostics_count, current_line
     col_end = #code,
   }
 
-  vim.api.nvim_buf_set_lines(popup.bufnr, current_line_num, current_line_num + #header_lines, false, header_lines)
+  vim.api.nvim_buf_set_lines(popup.get_buffnr(), current_line_num, current_line_num + #header_lines, false, header_lines)
   return header_lines, severity_pos, code_pos
 end
 
@@ -59,7 +33,7 @@ function handle_body(message, diag_count, index, current_line_num)
   local normalized_line_nr = (current_line_num == 0) and 0 or (current_line_num - 1)
   local message_start_pos = normalized_line_nr + 2
 
-  local body_lines = parser.break_new_lines(message)
+  local body_lines = cd_utils.break_new_lines(message)
   -- Ensure at least 2 rows for each message
   if #body_lines < 2 then
     table.insert(body_lines, "") -- Add an extra empty line
@@ -88,7 +62,7 @@ function handle_body(message, diag_count, index, current_line_num)
         end
 
         -- Insert the prettified lines
-        local lines = parser.break_new_lines(temp_var.match)
+        local lines = cd_utils.break_new_lines(temp_var.match)
         for _, k in ipairs(lines) do
           table.insert(new_body_lines, k)
         end
@@ -113,7 +87,7 @@ function handle_body(message, diag_count, index, current_line_num)
   end
 
   body_lines = new_body_lines
-  local pop_width = popup.win_config.width
+  local pop_width = popup.get_width()
 
   local new_vars = {}
   local line_i = 0
@@ -135,30 +109,14 @@ function handle_body(message, diag_count, index, current_line_num)
 
   local message_end_pos = message_start_pos + #body_lines
 
-  vim.api.nvim_buf_set_lines(popup.bufnr, message_start_pos, message_end_pos, false, body_lines)
+  vim.api.nvim_buf_set_lines(popup.get_buffnr(), message_start_pos, message_end_pos, false, body_lines)
   return body_lines, message_end_pos, new_vars
 end
-
-local is_open = false
 
 function Cool_Diagnostics()
   local current_line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local diagnostics = vim.diagnostic.get(0, { lnum = current_line })
-
-  -- Toggle popup
-  if not is_open then
-    popup:mount()
-    is_open = true
-  else
-    popup:unmount()
-    is_open = false
-    return
-  end
-
-  popup:on(event.BufLeave, function()
-    popup:unmount()
-    is_open = false
-  end)
+  popup.toggle()
 
   local severity_hl_ranges = {}
   local code_hl_ranges = {}
@@ -182,18 +140,19 @@ function Cool_Diagnostics()
   end
 
   for i, range in ipairs(severity_hl_ranges) do
-    local hl_group = "Diagnostic" .. severity_map[diagnostics[i].severity]
-    vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hl_group, range.line, range.col_start, range.col_end)
+    local sev = cd_utils.get_severity(diagnostics[i].severity)
+    local hl_group = "Diagnostic" .. sev
+    vim.api.nvim_buf_add_highlight(popup.get_buffnr(), -1, hl_group, range.line, range.col_start, range.col_end)
   end
 
   for _, range in ipairs(code_hl_ranges) do
     local hl_group = "Comment"
-    vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hl_group, range.line, range.col_start, range.col_end)
+    vim.api.nvim_buf_add_highlight(popup.get_buffnr(), -1, hl_group, range.line, range.col_start, range.col_end)
   end
 
   for _, range in ipairs(vars_hl_ranges) do
     local hl_group = "String"
-    vim.api.nvim_buf_add_highlight(popup.bufnr, -1, hl_group, range.line, range.col_start, range.col_end)
+    vim.api.nvim_buf_add_highlight(popup.get_buffnr(), -1, hl_group, range.line, range.col_start, range.col_end)
   end
 end
 
