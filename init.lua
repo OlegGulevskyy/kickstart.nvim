@@ -117,6 +117,10 @@ require('lazy').setup({
   -- Tabs for windows to be like a VSCode peasant
   require("kickstart.plugins.tabs"),
 
+
+  require "kickstart.plugins.better-ts-errors-local",
+  -- require "kickstart.plugins.better-ts-errors-remote",
+
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim',  opts = {} },
   {
@@ -532,6 +536,7 @@ local servers = {
   -- pyright = {},
   -- rust_analyzer = {},
   tsserver = {},
+  volar = {},
   html = { filetypes = { 'html', 'twig', 'hbs' } },
 
   lua_ls = {
@@ -619,8 +624,6 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
-
-require "custom.plugins.diagnostics"
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
