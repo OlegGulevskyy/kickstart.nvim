@@ -5,16 +5,21 @@ return {
     local util = require "formatter.util"
     local prettierConfig = function()
       -- usual local prettier lays inside node modules dir
-      local prettier_path_to_use = "./node_modules/.bin/prettier"
-
+      local path = ""
       local nodes_dir = util.find_node_modules("./")
-      local prettier = nodes_dir .. "/.bin/prettier"
-      if vim.fn.filereadable(prettier) == 0 then
-        prettier_path_to_use = "prettier" -- global prettier to use
+      if nodes_dir ~= nil then
+        path = nodes_dir .. "/.bin/prettier"
+      end
+      if vim.fn.filereadable(path) == 0 then
+        path = "prettier" -- global prettier to use
+      end
+
+      if path == "" then
+        return nil
       end
 
       return {
-        exe = prettier_path_to_use,
+        exe = path,
         args = { "--stdin-filepath", vim.fn.shellescape(vim.api.nvim_buf_get_name(0)) },
         stdin = true
       }
