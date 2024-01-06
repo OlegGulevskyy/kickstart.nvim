@@ -235,7 +235,7 @@ require('lazy').setup({
   require 'kickstart.plugins.leap',
   require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.copilot',
-  require 'kickstart.themes.poimandres',
+  require 'kickstart.themes.catppuccin',
   require 'kickstart.plugins.nui',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -249,7 +249,7 @@ require('lazy').setup({
 
 require("config.keymaps")
 
-vim.cmd('colorscheme poimandres')
+vim.cmd.colorscheme("catppuccin-mocha")
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
