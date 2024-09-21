@@ -122,7 +122,7 @@ require('lazy').setup({
   -- require "kickstart.plugins.better-ts-errors-remote",
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim',  opts = {} },
+  { 'folke/which-key.nvim',   opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -195,7 +195,7 @@ require('lazy').setup({
   },
 
   -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
+  -- { 'numToStr/Comment.nvim', opts = {} },
 
   -- Fuzzy Finder (files, lsp, etc)
   {
@@ -215,6 +215,8 @@ require('lazy').setup({
           return vim.fn.executable 'make' == 1
         end,
       },
+      'isak102/telescope-git-file-history.nvim',
+      dependencies = { 'tpope/vim-fugitive' }
     },
   },
 
@@ -234,9 +236,11 @@ require('lazy').setup({
   require 'kickstart.plugins.formatter',
   require 'kickstart.plugins.leap',
   require 'kickstart.plugins.autopairs',
-  require 'kickstart.plugins.copilot',
+  -- require 'kickstart.plugins.copilot',
+  require 'kickstart.plugins.supermaven',
   require 'kickstart.themes.catppuccin',
   require 'kickstart.plugins.nui',
+  require 'kickstart.plugins.codecompanion',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
@@ -244,7 +248,7 @@ require('lazy').setup({
   --    Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {})
 
 require("config.keymaps")
@@ -339,6 +343,7 @@ require('telescope').setup {
 
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
+pcall(require('telescope').load_extension, 'git_file_history')
 
 -- Telescope live_grep in git root
 -- Function to find the git root directory based on the current buffer's path
@@ -506,16 +511,15 @@ local on_attach = function(_, bufnr)
   end, '[W]orkspace [L]ist Folders')
 end
 
--- document existing key chains
-require('which-key').register {
-  ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-  ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-  ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
-  ['<leader>h'] = { name = 'More git', _ = 'which_key_ignore' },
-  ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-  ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-  ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-}
+require("which-key").add({
+  { "<leader>c", desc = "Code",      mode = "n" },
+  { "<leader>d", desc = "Document",  mode = "n" },
+  { "<leader>g", desc = "Git",       mode = "n" },
+  { "<leader>h", desc = "More git",  mode = "n" },
+  { "<leader>r", desc = "Rename",    mode = "n" },
+  { "<leader>s", desc = "Search",    mode = "n" },
+  { "<leader>w", desc = "Workspace", mode = "n" },
+})
 
 -- mason-lspconfig requires that these setup functions are called in this order
 -- before setting up the servers.
@@ -565,14 +569,23 @@ mason_lspconfig.setup {
 
 mason_lspconfig.setup_handlers {
   function(server_name)
-    require('lspconfig')[server_name].setup {
+    local server_opts = {
       capabilities = capabilities,
       on_attach = on_attach,
       settings = servers[server_name],
       filetypes = (servers[server_name] or {}).filetypes,
     }
+
+    require('lspconfig')[server_name].setup(server_opts)
   end,
 }
+
+require('lspconfig').gleam.setup({
+  cmd = { "/usr/local/bin/gleamn", "lsp" },
+  on_attach = on_attach,
+  capabilities = capabilities,
+  filetypes = { "gleam" },
+})
 
 -- [[ Configure nvim-cmp ]]
 -- See `:help cmp`
@@ -624,6 +637,8 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
+
+require("kickstart.plugins.nui")
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

@@ -4,20 +4,7 @@ return {
     -- Utilities for creating configurations
     local util = require "formatter.util"
     local prettierConfig = function()
-      -- usual local prettier lays inside node modules dir
-      local path = ""
-      local nodes_dir = util.find_node_modules("./")
-      if nodes_dir ~= nil then
-        path = nodes_dir .. "/.bin/prettier"
-      end
-      if vim.fn.filereadable(path) == 0 then
-        path = "prettier" -- global prettier to use
-      end
-
-      if path == "" then
-        return nil
-      end
-
+      local path = "prettier"
       return {
         exe = path,
         args = { "--stdin-filepath", vim.fn.shellescape(vim.api.nvim_buf_get_name(0)) },
