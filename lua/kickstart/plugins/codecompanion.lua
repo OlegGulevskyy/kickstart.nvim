@@ -11,13 +11,17 @@ return {
   },
   config = function()
     require("codecompanion").setup({
-      strategies = { chat = { adapter = "openai" } },
+      strategies = { chat = { adapter = "anthropic" } },
       adapters = {
-        openai = function()
-          return require("codecompanion.adapters").extend("openai", {
+        anthropic = function()
+          return require("codecompanion.adapters").extend("anthropic", {
+            env = {
+              api_key =
+              "cmd:op item get sfhj2i44a352itn6fvfn3awydu --reveal --field credential"
+            },
             schema = {
               model = {
-                default = "gpt-4o"
+                default = "claude-3-5-sonnet-20241022"
               },
             },
           })

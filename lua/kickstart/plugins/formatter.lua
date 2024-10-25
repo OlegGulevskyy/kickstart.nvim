@@ -1,10 +1,13 @@
 return {
   'mhartington/formatter.nvim',
   config = function()
-    -- Utilities for creating configurations
-    local util = require "formatter.util"
     local prettierConfig = function()
       local path = "prettier"
+      local nodeModulesPath = "node_modules/prettier/bin/prettier.cjs"
+      if vim.loop.fs_stat(nodeModulesPath) then
+        path = nodeModulesPath
+      end
+
       return {
         exe = path,
         args = { "--stdin-filepath", vim.fn.shellescape(vim.api.nvim_buf_get_name(0)) },

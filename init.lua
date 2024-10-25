@@ -581,7 +581,8 @@ mason_lspconfig.setup_handlers {
 }
 
 require('lspconfig').gleam.setup({
-  cmd = { "/usr/local/bin/gleamn", "lsp" },
+  cmd = { "gleam", "lsp" },
+  -- cmd = { "/usr/local/bin/gleamn", "lsp" }, -- for local dev, using my binary
   on_attach = on_attach,
   capabilities = capabilities,
   filetypes = { "gleam" },
@@ -642,3 +643,5 @@ require("kickstart.plugins.nui")
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+vim.api.nvim_set_hl(0, 'LineNr', { fg = '#6BA3FF' })
